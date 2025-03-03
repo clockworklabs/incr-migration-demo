@@ -7,6 +7,7 @@ struct Character {
     nickname: String,
     level: u32,
     class: Class,
+    alliance: Alliance,
 }
 
 #[derive(SpacetimeType, Debug, Copy, Clone)]
@@ -14,6 +15,13 @@ enum Class {
     Fighter,
     Caster,
     Medic,
+}
+
+#[derive(SpacetimeType, Debug, Copy, Clone)]
+enum Alliance {
+    Good,
+    Neutral,
+    Evil,
 }
 
 #[spacetimedb::reducer]
@@ -24,6 +32,7 @@ fn create_character(ctx: &ReducerContext, class: Class, nickname: String) {
         nickname: nickname.clone(),
         level: 1,
         class,
+        alliance: Alliance::Neutral,
     });
 }
 
@@ -65,6 +74,24 @@ fn level_up_character(ctx: &ReducerContext) {
         ctx,
         Character {
             level: character.level + 1,
+            ..character
+        },
+    );
+}
+
+#[spacetimedb::reducer]
+fn choose_alliance(ctx: &ReducerContext, alliance: Alliance) {
+    let character = find_character_for_player(ctx);
+    log::info!(
+        "Setting {}'s alliance to {:?} for player {}",
+        character.nickname,
+        alliance,
+        ctx.sender,
+    );
+    update_character(
+        ctx,
+        Character {
+            alliance,
             ..character
         },
     );
